@@ -31,6 +31,7 @@ class SlvsConstraints(PropertyGroup):
         SlvsDistance,
         SlvsAngle,
         SlvsDiameter,
+        SlvsRatio,
     )
 
     _geometric_constraints = (
@@ -42,7 +43,6 @@ class SlvsConstraints(PropertyGroup):
         SlvsTangent,
         SlvsMidpoint,
         SlvsPerpendicular,
-        SlvsRatio,
     )
 
     _constraints = (

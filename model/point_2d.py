@@ -118,6 +118,10 @@ class SlvsPoint2D(Point2D, PropertyGroup):
             solvesys, self.py_data, edge, wrkpln.py_data, group, entity_type=SlvsLine2D
         )
 
+    def getDialog(self, listToInsert):
+        toDisplay = [{"property":"co"}]
+        return super().getDialog(toDisplay)
+
     def draw_props(self, layout):
         sub = super().draw_props(layout)
         sub.prop(self, "co")

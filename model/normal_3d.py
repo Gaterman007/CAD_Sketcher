@@ -64,6 +64,10 @@ class SlvsNormal3D(Normal3D, PropertyGroup):
     )
     props = ("ui_orientation",)
 
+    def getDialog(self, listToInsert):
+        toDisplay = [{"property":"ui_orientation"}]
+        return super().getDialog(toDisplay)
+
     def draw_props(self, layout):
         sub = super().draw_props(layout)
         sub.prop(self, "ui_orientation")

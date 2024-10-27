@@ -84,6 +84,10 @@ def draw_cb():
 
     global_data.redraw_selection_buffer = True
 
+def draw2d_cb():
+    context = bpy.context
+    for widget in global_data.dialog.values():
+        widget.draw(context)
 
 class View3D_OT_slvs_register_draw_cb(Operator):
     bl_idname = Operators.RegisterDrawCB
@@ -92,6 +96,9 @@ class View3D_OT_slvs_register_draw_cb(Operator):
     def execute(self, context: Context):
         global_data.draw_handle = bpy.types.SpaceView3D.draw_handler_add(
             draw_cb, (), "WINDOW", "POST_VIEW"
+        )
+        global_data.draw_handle_2d = bpy.types.SpaceView3D.draw_handler_add(
+            draw2d_cb, (), "WINDOW", "POST_PIXEL"
         )
 
         return {"FINISHED"}
@@ -103,6 +110,7 @@ class View3D_OT_slvs_unregister_draw_cb(Operator):
 
     def execute(self, context: Context):
         global_data.draw_handler.remove_handle()
+        global_data.draw_handle_2d.remove_handle()
         return {"FINISHED"}
 
 

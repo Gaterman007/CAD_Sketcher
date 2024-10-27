@@ -67,6 +67,10 @@ class SlvsPoint3D(Point3D, PropertyGroup):
     )
     props = ("location",)
 
+    def getDialog(self, listToInsert):
+        toDisplay = [{"property":"location"}]
+        return super().getDialog(toDisplay)
+
     def draw_props(self, layout):
         sub = super().draw_props(layout)
         sub.prop(self, "location")

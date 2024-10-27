@@ -296,6 +296,26 @@ class SlvsGenericEntity:
     def dependencies(self) -> List["SlvsGenericEntity"]:
         return []
 
+    def getDialog(self, listToInsert):
+        is_experimental = preferences.is_experimental()
+        self.listDialog = []
+        self.listDialog.append({"property":"name"})
+        self.listDialog.append({"label":"---------------"})
+        self.listDialog.append({"label":"Type: " + type(self).__name__})
+        self.listDialog.append({"label":"Is Origin: " + str(self.origin)})
+        if is_experimental:
+            self.listDialog.append({"label":"Index: " + + str(self.slvs_index)})
+            self.listDialog.append({"label":"Dependencies:"})
+            for e in self.dependencies():
+                self.listDialog.append({"label":str(e)})
+        self.listDialog.append({"property":"visible"})
+        self.listDialog.append({"property":"fixed"})
+        self.listDialog.append({"property":"construction"})
+        if listToInsert is not None:
+            self.listDialog.append(listToInsert)
+        self.listDialog.append({"button":{"ops":Operators.DeleteEntity,"icon":"X","type":None,"index":self.slvs_index}})
+        return self.listDialog
+
     def draw_props(self, layout):
         is_experimental = preferences.is_experimental()
 

@@ -263,6 +263,10 @@ class SlvsArc(Entity2D, PropertyGroup):
 
         return endpoint
 
+    def getDialog(self, listToInsert):
+        toDisplay = [{"property":"invert_direction"}]
+        return super().getDialog(toDisplay)
+
     def draw_props(self, layout):
         sub = super().draw_props(layout)
         sub.prop(self, "invert_direction")

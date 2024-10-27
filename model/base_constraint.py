@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class GenericConstraint:
+
     def _name_getter(self):
         return self.get("name", str(self))
 
@@ -128,7 +129,19 @@ class GenericConstraint:
             setattr(c, prop, e)
 
         return c
-
+        
+    def getDialog(self, listToInsert):
+        self.listDialog = []
+        self.listDialog.append({"property":"name"})
+        self.listDialog.append({"label":"---------------"})
+        self.listDialog.append({"property":"visible"})
+        self.listDialog.append({"label":"---------------"})
+#        self.listDialog.append({"image":{"icon":"x"}})
+        if listToInsert is not None:
+            self.listDialog.append(listToInsert)
+        self.listDialog.append({"button":{"ops":Operators.DeleteConstraint,"icon":"x","type":self.type,"index":self.index()}})
+        return self.listDialog
+        
     def draw_props(self, layout: UILayout):
         is_experimental = preferences.is_experimental()
 
@@ -250,6 +263,14 @@ class DimensionalConstraint(GenericConstraint):
             return []
         return self.create_slvs_data(solvesys, **kwargs)
 
+    def getDialog(self, listToInsert):
+        if listToInsert is None:
+            listToInsert = []
+        listToInsert += [{"property":"is_reference"},{"property":"value"},{"label":"Formula:"},{"property":"formula"}]
+        if hasattr(self, "setting"):
+            listToInsert += [{"property":"setting"}]
+        return super().getDialog(listToInsert)
+        
     def draw_props(self, layout: UILayout):
         sub = GenericConstraint.draw_props(self, layout)
         sub.prop(self, "is_reference")
@@ -259,7 +280,28 @@ class DimensionalConstraint(GenericConstraint):
             # so we disable user input instead
             col.prop(self, "value")
             col.enabled = not self.is_reference
+
+        # Ajout d'un champ pour la formule
+        if hasattr(self, "formula"):
+            row = sub.row()
+            # Colonne pour le texte (à gauche)
+            col = row.column()
+            col.label(text="Formula:")
+
+            row = sub.row()
+            # Colonne pour la propriété StringProperty (à droite), mais désactivée pour rendre 'readonly'
+            col = row.column()
+            col.enabled = True  # Empêche la modification par l'utilisateur
+            col.prop(self, "formula", text="")
+                    
         if hasattr(self, "setting"):
             row = sub.row()
             row.prop(self, "setting")
         return sub
+
+    formula: StringProperty(
+        name="Formula",
+        description="Formula to compute the value dynamically",
+        default="",
+        update=update_cb  # Optionnel : mettre à jour si la formule change
+    )

@@ -372,6 +372,14 @@ class SlvsDistance(DimensionalConstraint, PropertyGroup):
         self.draw_offset = pos[1] / ui_scale
         self.draw_outset = pos[0] / ui_scale
 
+    def getDialog(self, listToInsert):
+        toDisplay = [{"property":"flip"},{"label":"Alignment:"},{"property":"align"}]
+        if preferences.is_experimental():
+            toDisplay += [{"property":"draw_offset"}]
+        if listToInsert is not None:
+            toDisplay = listToInsert + toDisplay
+        return super().getDialog(toDisplay)
+
     def draw_props(self, layout):
         sub = super().draw_props(layout)
 
