@@ -352,7 +352,7 @@ tool_select = (
         None,
     ),
     (
-        Operators.ContextDialog,
+        Operators.ContextMenu,
         {"type": "RIGHTMOUSE", "value": "PRESS"},
         {"properties": [("delayed", True)]},
     ),

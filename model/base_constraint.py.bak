@@ -298,3 +298,10 @@ class DimensionalConstraint(GenericConstraint):
             row = sub.row()
             row.prop(self, "setting")
         return sub
+
+    formula: StringProperty(
+        name="Formula",
+        description="Formula to compute the value dynamically",
+        default="",
+        update=update_cb  # Optionnel : mettre à jour si la formule change
+    )

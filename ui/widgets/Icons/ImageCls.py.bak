@@ -20,10 +20,10 @@ class Image:
         self.imageData = [color[0], color[1], color[2], color[3]] * (width * height)
         self.image.pixels = self.imageData
 
-    def get_image_copy(self,new_name):
+    def get_image_copy(self):
         has_alpha = (self.image.channels == 4)
         new_image = bpy.data.images.new(
-            name=new_name,
+            name=self.image.name,
             width=self.image.size[0],
             height=self.image.size[1],
             alpha=has_alpha
@@ -35,6 +35,8 @@ class Image:
     def set_image(self, rel_filename):
         """Charge une image si elle n'est pas déjà chargée, ou la crée si elle n'existe pas."""
         # D'abord, essayer de charger l'image
+        rel_filename += '.png'
+        rel_filepath = os.path.join("path/to/your/images", rel_filename)
         imgname = f".{os.path.basename(rel_filepath)}"
 
         try:

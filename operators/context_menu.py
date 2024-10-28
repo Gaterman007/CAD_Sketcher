@@ -15,9 +15,11 @@ from ..ui.widgets.bl_ui_checkbox import BL_UI_Checkbox
 from ..ui.widgets.bl_ui_button import BL_UI_Button
 from ..ui.widgets.bl_ui_image import BL_UI_Image
 from ..ui.widgets.bl_ui_dropdown import BL_UI_DropDown
+from ..ui.widgets.bl_ui_seperator import BL_UI_Seperator
+
 from ..ui.widgets.Icons.SVG_Icon import SVG_Icon
 
-class View3D_OT_slvs_context_menu(Operator, HighlightElement):
+class View3D_OT_slvs_context_menuBackup(Operator, HighlightElement):
     """Show element's settings"""
 
     bl_idname = Operators.ContextMenu
@@ -91,73 +93,43 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
     index: IntProperty(name="Index", default=-1, options={"SKIP_SAVE"})
     delayed: BoolProperty(default=False)
 
-    # Variable de classe pour le répertoire du fichier
-    file_directory = os.path.dirname(os.path.abspath(__file__))
-
-
     @classmethod
     def description(cls, context: Context, properties: PropertyGroup):
         cls.handle_highlight_hover(context, properties)
         if properties.type:
             return properties.type.capitalize()
         return cls.__doc__
-
-    def invoke(self, context: Context, event: Event):
-        self.panelX = 200
-        self.panelY = 200
-        self.panelWidth = 300
-        self.panelHeight = 400
-        self.panelX = (context.region.width // 2) - (self.panelWidth // 2)
-        self.panelY = (context.region.height // 2) - (self.panelHeight // 2)
-        self.layoutDialog(context)
-        context.window_manager.modal_handler_add(self)  # Ajoute le gestionnaire modal
-        return {'RUNNING_MODAL'}
-
-    def draw_popup(self, menu, context):
-        # create the layout
-        is_entity = True
-        entity_index = None
-        constraint_index = None
-        element = None
-
-        # Constraints
-        if self.properties.is_property_set("type"):
-            constraint_index = self.index
-            constraints = context.scene.sketcher.constraints
-            element = constraints.get_from_type_index(self.type, self.index)
-            is_entity = False
-        else:
-            # Entities
-            entity_index = (
-                self.index
-                if self.properties.is_property_set("index")
-                else global_data.hover
-            )
-
-            if entity_index != -1:
-                element = context.scene.sketcher.entities.get(entity_index)
         
-        if element:
-            col = menu.layout
-            col = col.column()
-            element.draw_props(col)
-
-    def handle_widget_events(self, context: Context, event: Event):
-        retValue = {'RUNNING_MODAL'}
-        for widget in global_data.dialog.values():
-            retValue, handled = widget.handle_event(context,event)
-            if handled:
-                break
-#        print("handle_widget_events",retValue)
-        return retValue
+    def invoke(self, context: Context, event: Event):
+        if not self.delayed:
+            return self.execute(context)
+        context.window_manager.modal_handler_add(self)
+        return {"RUNNING_MODAL"}
 
     def modal(self, context: Context, event: Event):
-        if event.type in {'ESC','RIGHTMOUSE'}:  # Permet de quitter avec ESC
+        retValue = {'RUNNING_MODAL'}
+        if self.delayed and event.value == "RELEASE":
+            self.delayed = False
+            return self.execute(context)
+        
+        if event.type in {'ESC'}:  # Permet de quitter avec ESC
             global_data.dialog.clear()
             bpy.context.region.tag_redraw()
             return {'CANCELLED'}
 
-        retValue = self.handle_widget_events(context,event)
+        if self.rightMouseDown:     # Permet de quitter avec Right Mouse Clic
+            global_data.dialog.clear()
+            bpy.context.region.tag_redraw()
+            return {'CANCELLED'}
+
+        if event.type == 'RIGHTMOUSE':
+            if event.value == 'PRESS':
+                self.rightMouseDown = True
+
+        for widget in global_data.dialog.values():
+            retValue, handled = widget.handle_event(context,event)
+            if handled:
+                break
 
         if retValue != {'RUNNING_MODAL'}:
             global_data.dialog.clear()
@@ -165,9 +137,8 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
             
         return retValue
 
-
     def getElement(self,context):
-        # create the lae
+        # create from element
         entity_index = None
         constraint_index = None
         element = None
@@ -177,7 +148,6 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
             constraint_index = self.index
             constraints = context.scene.sketcher.constraints
             element = constraints.get_from_type_index(self.type, self.index)
-            is_entity = False
         else:
             # Entities
             entity_index = (
@@ -289,6 +259,11 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
                             if newwidget is not None:
                                 panel.add_widget(newwidget)
                                 y_pos += 26
+                        elif key == "seperator":
+                            newwidget = BL_UI_Seperator(8,y_pos,280,20)
+                            if newwidget is not None:
+                                panel.add_widget(newwidget)
+                                y_pos += 26
                         elif key == "button":
                             ops = value["ops"]
                             ops_class = self.get_operator_class_by_idname(ops)
@@ -314,7 +289,13 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
         return y_pos
 
     def layoutDialog(self,context):
-    
+        self.panelX = 200
+        self.panelY = 200
+        self.panelWidth = 300
+        self.panelHeight = 400
+        self.rightMouseDown = False
+        self.panelX = (context.region.width // 2) - (self.panelWidth // 2)
+        self.panelY = (context.region.height // 2) - (self.panelHeight // 2)        
         element = self.getElement(context)
         if element is not None:
             dialogList = element.getDialog(None)
@@ -323,7 +304,6 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
             y_pos = self.layoutWidgets(element,y_pos,dialogList,panel)
             panel.height = y_pos + 8
             global_data.dialog['Menu1'] = panel
-            
         return True
 
     def addPropToDialog(self,element,propname,ypos,panel):
@@ -526,38 +506,13 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
 #    props = ()
 
     def execute(self, context: Context):
-        is_entity = True
-        entity_index = None
-        constraint_index = None
-        element = None
-
-        # Constraints
-        if self.properties.is_property_set("type"):
-            constraint_index = self.index
-            constraints = context.scene.sketcher.constraints
-            element = constraints.get_from_type_index(self.type, self.index)
-            is_entity = False
-        else:
-            # Entities
-            entity_index = (
-                self.index
-                if self.properties.is_property_set("index")
-                else global_data.hover
-            )
-
-            if entity_index != -1:
-                element = context.scene.sketcher.entities.get(entity_index)
-
-        def draw_context_menu(self, context: Context):
-            col = self.layout.column()
-            element.draw_props(col)
-
+        element = self.getElement(context)
         if not element:
             bpy.ops.wm.call_menu(name="VIEW3D_MT_selected_menu")
             return {"FINISHED"}
 
-        print("It is the wright one dialog")
-        context.window_manager.popup_menu(draw_context_menu)
-        return {"FINISHED"}
+        self.layoutDialog(context)
+        context.window_manager.modal_handler_add(self)  # Ajoute le gestionnaire modal
+        return {"RUNNING_MODAL"}
 
-register, unregister = register_classes_factory((View3D_OT_slvs_context_menu,View3D_OT_slvs_context_dialog))
+register, unregister = register_classes_factory((View3D_OT_slvs_context_menuBackup,View3D_OT_slvs_context_dialog))

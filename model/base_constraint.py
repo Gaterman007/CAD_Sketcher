@@ -133,9 +133,9 @@ class GenericConstraint:
     def getDialog(self, listToInsert):
         self.listDialog = []
         self.listDialog.append({"property":"name"})
-        self.listDialog.append({"label":"---------------"})
+        self.listDialog.append({"seperator":""})
         self.listDialog.append({"property":"visible"})
-        self.listDialog.append({"label":"---------------"})
+        self.listDialog.append({"seperator":""})
 #        self.listDialog.append({"image":{"icon":"x"}})
         if listToInsert is not None:
             self.listDialog.append(listToInsert)
