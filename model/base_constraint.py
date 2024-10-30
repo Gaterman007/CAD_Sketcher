@@ -284,14 +284,14 @@ class DimensionalConstraint(GenericConstraint):
         # Ajout d'un champ pour la formule
         if hasattr(self, "formula"):
             row = sub.row()
-            # Colonne pour le texte (à gauche)
+            # Colonne pour le texte (Ã  gauche)
             col = row.column()
             col.label(text="Formula:")
 
             row = sub.row()
-            # Colonne pour la propriété StringProperty (à droite), mais désactivée pour rendre 'readonly'
+            # Colonne pour la propriÃ©tÃ© StringProperty (Ã  droite), mais dÃ©sactivÃ©e pour rendre 'readonly'
             col = row.column()
-            col.enabled = True  # Empêche la modification par l'utilisateur
+            col.enabled = True  # EmpÃªche la modification par l'utilisateur
             col.prop(self, "formula", text="")
                     
         if hasattr(self, "setting"):
@@ -303,5 +303,5 @@ class DimensionalConstraint(GenericConstraint):
         name="Formula",
         description="Formula to compute the value dynamically",
         default="",
-        update=update_cb  # Optionnel : mettre à jour si la formule change
+        update=update_cb  # Optionnel : mettre Ã  jour si la formule change
     )

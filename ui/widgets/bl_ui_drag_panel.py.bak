@@ -21,14 +21,14 @@ class BL_UI_Drag_Panel(BL_UI_Widget):
         
         return ({"RUNNING_MODAL"},False)
 
-    def mouse_move(self, x, y, context):
+    def mouse_move(self, x, y):
         if self.is_drag:
             self.drag_offset_x = x - self.downPos[0]
             self.drag_offset_y = y - self.downPos[1]
             bpy.context.region.tag_redraw()
         return ({"RUNNING_MODAL"},False)
         
-    def mouse_up(self, x, y, context):
+    def mouse_up(self, x, y):
         if self.is_drag:
             self.is_drag = False
             self.set_location(self._x + self.drag_offset_x,self._y + self.drag_offset_y)

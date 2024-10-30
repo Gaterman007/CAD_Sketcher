@@ -52,6 +52,20 @@ def draw_constraint_listitem(
     props.highlight_active = True
     props.highlight_members = True
 
+    # Context menu, shows constraint name
+    props = row.operator(
+        declarations.Operators.ContextDialog,
+        text="",
+        icon="OUTLINER_DATA_GP_LAYER",
+        emboss=False,
+    )
+    props.type = constraint.type
+    props.index = index
+    props.highlight_hover = True
+    props.highlight_active = True
+    props.highlight_members = True
+
+
     # Delete operator
     props = row.operator(
         declarations.Operators.DeleteConstraint,

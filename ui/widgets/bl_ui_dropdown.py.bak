@@ -41,7 +41,7 @@ class BL_UI_DropDown(BL_UI_Label):
                             self.newbuttons.append(newbutton)
                             newbutton.visible = False
                             self.add_widget(newbutton)
-                            y2 += 26
+                            y2 += self.childHeight
                             data += 1
 
     def buttonClick(self,data):

@@ -127,6 +127,7 @@ class BL_UI_Label(BL_UI_Widget):
     @text.setter
     def text(self, value):
         if value != self._text:
+            bpy.context.region.tag_redraw()
             self._text = value
 
     @property
@@ -164,9 +165,6 @@ class BL_UI_Label(BL_UI_Widget):
             return
         # draw background
         super().draw(context)
-
-#        if type(self._text) is not str:
-#            print("label", self.propName,self._text)
 
         # draw the text
         if bpy.app.version < (4, 0, 0):

@@ -52,17 +52,6 @@ class VIEW3D_PT_sketcher_entities(VIEW3D_PT_sketcher_base):
 
             row.prop(e, "name", text="")
 
-            # Context menu
-            props = row.operator(
-                declarations.Operators.ContextMenu,
-                text="",
-                icon="OUTLINER_DATA_GP_LAYER",
-                emboss=False,
-            )
-            props.highlight_hover = True
-            props.highlight_active = True
-            props.index = e.slvs_index
-
             # Context dialog
             props = row.operator(
                 declarations.Operators.ContextDialog,

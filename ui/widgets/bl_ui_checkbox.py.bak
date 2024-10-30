@@ -24,9 +24,8 @@ class BL_UI_Checkbox(BL_UI_Label):
         if self.prop_info is not None:
             if 'name' in prop_info.keywords:
                 self.text = prop_info.keywords['name']
-#        if self.attrName is not None:
-        if self.hasProp:
-            self.checked = getattr(self.element,self.attrName)
+        if self.attr is not None:
+            self.checked = getattr(self.element,self.attr)
 
     def setParent(self, parent):
         super().setParent(parent)
@@ -47,9 +46,8 @@ class BL_UI_Checkbox(BL_UI_Label):
     def checked(self, value):
         if value != self.__state:
             self.__state = value
-#            if self.attrName is not None:
-            if self.hasProp:
-                setattr(self.element,self.attrName,self.checked) 
+            if self.attr is not None:
+                setattr(self.element,self.attr,self.checked) 
             bpy.context.region.tag_redraw()
  
     def batch(self):        
@@ -85,8 +83,8 @@ class BL_UI_Checkbox(BL_UI_Label):
     def draw(self,context):
         if not self.visible:
             return
-#        if self.updater is not None:
-#            self.updater(self.element,context)
+        if self.updater is not None:
+            self.updater(self.element,context)
         # draw le text
         super().draw(context)
         # draw le checkbox
@@ -98,7 +96,7 @@ class BL_UI_Checkbox(BL_UI_Label):
             self.batch_cross.draw(self.shader_chb)
         self.drawEndShader(self.shader_chb,context)  
          
-    def toggle_state(self, context):
+    def toggle_state(self):
         self.checked = not self.checked
         bpy.context.region.tag_redraw()
 
@@ -111,9 +109,9 @@ class BL_UI_Checkbox(BL_UI_Label):
 
         return ({"RUNNING_MODAL"},False)
 
-    def mouse_up(self, x, y, context):
+    def mouse_up(self, x, y):
         if self.is_in_rect(x,y):
-            self.toggle_state(context)
+            self.toggle_state()
             return ({"RUNNING_MODAL"},True)
 
         return ({"RUNNING_MODAL"},False)

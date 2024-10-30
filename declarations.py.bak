@@ -47,6 +47,7 @@ class Operators(str, Enum):
     AlignView = "view3d.slvs_align_view"
     BatchSet = "view3d.slvs_batch_set"
     ContextMenu = "view3d.slvs_context_menu"
+    ContextDialog = "view3d.slvs_context_dialog"
     Copy = "view3d.slvs_copy"
     DeleteConstraint = "view3d.slvs_delete_constraint"
     DeleteEntity = "view3d.slvs_delete_entity"

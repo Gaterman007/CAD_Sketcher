@@ -63,6 +63,17 @@ class VIEW3D_PT_sketcher_entities(VIEW3D_PT_sketcher_base):
             props.highlight_active = True
             props.index = e.slvs_index
 
+            # Context dialog
+            props = row.operator(
+                declarations.Operators.ContextDialog,
+                text="",
+                icon="OUTLINER_DATA_GP_LAYER",
+                emboss=False,
+            )
+            props.highlight_hover = True
+            props.highlight_active = True
+            props.index = e.slvs_index
+
             # Delete operator
             props = row.operator(
                 declarations.Operators.DeleteEntity,

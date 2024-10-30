@@ -46,7 +46,6 @@ class Operators(str, Enum):
     AlignWorkplaneCursor = "view3d.slvs_align_workplane_cursor"
     AlignView = "view3d.slvs_align_view"
     BatchSet = "view3d.slvs_batch_set"
-    ContextMenu = "view3d.slvs_context_menu"
     ContextDialog = "view3d.slvs_context_dialog"
     Copy = "view3d.slvs_copy"
     DeleteConstraint = "view3d.slvs_delete_constraint"
