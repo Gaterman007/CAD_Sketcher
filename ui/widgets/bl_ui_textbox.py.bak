@@ -49,7 +49,7 @@ class BL_UI_Textbox(BL_UI_Label):
         super().set_propinfo(prop_info)
         if 'step' in prop_info.keywords:
             self.setStep(getattr(self.element,"step"))
-        self.text = self.attributText
+        self._text = self.attributText
         
     def setStep(self,value):
         self.step = value
@@ -96,11 +96,10 @@ class BL_UI_Textbox(BL_UI_Label):
 
         if not self.visible:
             return
-            
-        if self.updater is not None:
-            self.updater(self.element,context)
-         # update la valeur du text au cas qu il a changer
-        self.text = self.attributText
+        # update la valeur du text au cas qu il a changer
+        if self.hasProp:
+            self._text = self.attributText
+
         super().draw(context)
     
         if self.caret_visible:
@@ -110,7 +109,7 @@ class BL_UI_Textbox(BL_UI_Label):
             self.batch_carret.draw(self._shaderBackground)
             
 
-    def text_input(self, event):
+    def text_input(self, event, context):
 
         if self.hasFocus:
             text_Changed = False
@@ -151,8 +150,9 @@ class BL_UI_Textbox(BL_UI_Label):
             elif event.type == 'END':
                 self._carret_pos = len(self.text)
             if text_Changed and self.element is not None:
-                self.attributText = self.text
-                self.text = self.attributText
+                if self.hasProp:
+                    self.attributText = self.text              
+                    self.text = self.attributText
             self.update_carret()
                 
             bpy.context.region.tag_redraw()
@@ -172,30 +172,31 @@ class BL_UI_Textbox(BL_UI_Label):
         else:
             return ({"RUNNING_MODAL"},False)
 
-    def mouse_move(self, x, y):
+    def mouse_move(self, x, y, context):
         if self.mousePressed:
             if self.drag:
-                print("dragging",self.attr)
-                if self.attr is not None:
+#                if self.attrName is not None:
+                if self.hasProp:
                     value = self.saveData - (float(self.downPos[0] - x) / self.increment)
-                    print(value)
-                    self.attributText = value
+#                    if self.element.label == "Distance":
+#                        self.element._set_value(value)
+#                        print("new value ",value)
+#                    else:
+                    self.attribut = value
+                    self.attribut = value
                     self.text = self.attributText
-                    print(self.text)
-#                bpy.context.region.tag_redraw()
+#                    print("TextBox Mouse Move ",self.element, hex(id(self.element)))
                 return ({"RUNNING_MODAL"},True)
             else:
-                print("is_numeric",self._is_numeric)
                 if self._is_numeric:
-                    print("attribut is_numeric",self.attribut)
-                    if abs(self.downPos[0] - x) > 5 or abs(self.downPos[1] - y) > 5:
-                        print("start drag",self.attribut)
-                        self.saveData = self.attribut
-                        self.drag = True
+                    if self.hasProp:
+                        if abs(self.downPos[0] - x) > 5 or abs(self.downPos[1] - y) > 5:
+                            self.saveData = self.attribut
+                            self.drag = True
                 return ({"RUNNING_MODAL"},True)
         return ({"RUNNING_MODAL"},False)
 
-    def mouse_up(self, x, y):
+    def mouse_up(self, x, y, context):
         if self.drag:
             self.drag = False
             self.mousePressed = False

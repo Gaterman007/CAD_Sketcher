@@ -24,11 +24,8 @@ class BL_UI_Label(BL_UI_Widget):
         
         self.font_id = 1
         self.bg_transparent = False
-
-        self.presision = 6
-        self._is_numeric = False
         self.subtype = None
-        self.unit = None
+
         
 #
 # Number
@@ -104,8 +101,7 @@ class BL_UI_Label(BL_UI_Widget):
                 self.setPrecision(prop_info.keywords['precision'])
             if 'subtype' in prop_info.keywords:
                 self.subtype = prop_info.keywords['subtype']
-            if 'unit' in prop_info.keywords:
-                self.unit = prop_info.keywords['unit']
+
 
     def setPrecision(self,presision):
         self.presision = presision

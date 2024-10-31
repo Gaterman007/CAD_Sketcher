@@ -55,6 +55,13 @@ class BL_UI_Widget:
             self.propName = propInfo[0]
             self.setProperty(*propInfo[1:])
 
+    def eraseChilds(self):
+        for widget in self.childs:
+            widget.eraseChilds()
+            self.childs.remove(widget)
+            del widget
+        self.childs.clear()
+        
     def setProperty(self,*args):
         if len(args) == 2 or len(args) == 3:
             self.attrIndex = None
@@ -126,9 +133,9 @@ class BL_UI_Widget:
         return outMatrix
     
     def setParent(self, parent):
-        self._parent = parent
+        self._parent =  parent
         if self.bg_transparent:
-            self.bg_color = parent.bg_color    
+            self.bg_color = self._parent.bg_color    
 
     def getParent(self):
         return self._parent

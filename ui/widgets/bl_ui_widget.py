@@ -5,6 +5,7 @@ from gpu.matrix import get_projection_matrix, get_model_view_matrix
 import mathutils
 import math
 
+from ... import units
 from bpy.types import Operator, Context, Event, PropertyGroup
 
 class BL_UI_Widget:
@@ -49,7 +50,9 @@ class BL_UI_Widget:
         self._attribut = None
         self.attrIndex = None
         self._is_numeric = False
-        
+        self.unit = None
+        self.presision = 6
+        self.attrType = str
         propInfo = kwargs.get("propInfo", None)
         if propInfo is not None:
             self.propName = propInfo[0]
@@ -91,6 +94,12 @@ class BL_UI_Widget:
                 self.attrName = prop_info.keywords['attr']
 #                print(self.attrName)
                 self._hasProp = True
+                if self.attrIndex is not None:
+                    self.attrType = type(getattr(self.element,self.attrName)[self.attrIndex])
+                else:
+                    self.attrType = type(getattr(self.element,self.attrName))
+                if self.attrType is float:
+                    self._is_numeric = True
 #                self.attribut = getattr(self.element,self.attrName)
             if 'get' in prop_info.keywords:
                 if callable(prop_info.keywords['get']):
@@ -104,7 +113,9 @@ class BL_UI_Widget:
                 if callable(prop_info.keywords['update']):
                     # Récupérer la fonction updater
                     self.setUpdater(prop_info.keywords['update'])
-        
+            if 'unit' in prop_info.keywords:
+                self.unit = prop_info.keywords['unit']
+                
     def setFocus(self, widgetFocus):
         parent = widgetFocus.getParent()
         # aller chercher le premier parent
@@ -159,17 +170,8 @@ class BL_UI_Widget:
         if self.hasProp:
             self._attribut = getattr(self.element,self.attrName)
             if self.attrIndex is not None:
-                if type(self._attribut[self.attrIndex]) is float:
-                    self._is_numeric = True
-                if self.unit == "ROTATION":
-                    return math.degrees(self._attribut[self.attrIndex])
-                else:
-                    return self._attribut[self.attrIndex]
+                return self._attribut[self.attrIndex]
             else:
-                if type(self._attribut) is float:
-                    self._is_numeric = True
-                if self.unit == "ROTATION":
-                    return math.degrees(self._attribut)
                 return self._attribut
         return None
             
@@ -181,8 +183,6 @@ class BL_UI_Widget:
         else:
             valdiff = (value != self._attribut)
         if valdiff:
-            if self.unit == "ROTATION":
-                value = math.radians(value)
             if self.attrIndex is not None:
                 self._attribut[self.attrIndex] = value
             else:
@@ -197,24 +197,32 @@ class BL_UI_Widget:
 
     @property
     def attributText(self):
-        value = self.attribut
-        if type(value) is float:
-            return f"{value:.{self.presision}f}"
-        elif type(value) is int:
-            return f"{value}"
-        elif type(value) is str:
-            return value
-        return value
+        if self.attrType is float:
+            if self.unit == "ROTATION":
+                return units.format_angle(self.attribut,hide_units = True)
+            return f"{self.attribut:.{self.presision}f}"
+        elif self.attrType is int:
+            return f"{self.attribut}"
+        elif self.attrType is str:
+            return self.attribut
+        return self.attribut
 
     @attributText.setter
     def attributText(self, value):
-        oldValue = self.attribut
-        if type(oldValue) is float:
-            self.attribut = float(value)
-        elif type(oldValue) is int:
+        if self.attrType is float:
+            textvalue = 0.0
+            try:
+                if self.unit == "ROTATION":
+                    textvalue = math.radians(float(value))
+                else:
+                    textvalue = float(value)
+            except ValueError:
+                textvalue = 0.0
+            self.attribut = textvalue
+        elif self.attrType is int:
             self.attribut = int(value)
-        elif type(oldValue) is str:
-            self.attribut = str(value)
+        elif self.attrType is str:
+            self.attribut = value
 
     @property
     def width(self):
