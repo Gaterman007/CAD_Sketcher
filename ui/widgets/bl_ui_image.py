@@ -4,14 +4,14 @@ import gpu
 
 from .bl_ui_widget import BL_UI_Widget
 from gpu_extras.batch import batch_for_shader
-from .Icons.SVG_Icon import SVG_Icon
+from .Icons.SVG_Icon import SVG_Icon, get_SVG_Icon
 
 class BL_UI_Image(BL_UI_Widget):
 
     # Ajouter 'widgets\SVG_Files' au répertoire parent
     svg_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'widgets', 'SVG_Files')
 
-    def __init__(self, x, y, width = 300, height = 150, color = (0.0,0.0,0.0,0.0)):
+    def __init__(self, x, y, width = 80, height = 40, color = (0.0,0.0,0.0,0.0)):
         self.__state = 0
         self.__image = None
         self.__image_size = (width, height)
@@ -19,7 +19,9 @@ class BL_UI_Image(BL_UI_Widget):
 
     def __del__(self):
         if self.__image is not None:
+            bpy.data.images.remove(self.__image)
             self.__image = None
+            self.texture = None
         
     def set_image_size(self, image_size):
         self.__image_size = image_size
@@ -48,10 +50,12 @@ class BL_UI_Image(BL_UI_Widget):
             fileExist = os.path.exists(svg_filepath)
             if fileExist:    # fichier svg exist
                 # cree l image a partir du fichier svg
-                svg_Icon = SVG_Icon(filename = svg_filepath)
+                svg_Icon = get_SVG_Icon(svg_filepath)
+                svg_Icon.setSize(width = self.__image_size[0], height = self.__image_size[1])
                 svg_Icon.create_Image()
                 self.__image = svg_Icon.imageIcon.get_image_copy(imgname)
-                del svg_Icon
+                if svg_Icon.imageIcon is not None:
+                    svg_Icon.imageIcon = None
                 self.__image.gl_load()
             else:
                 png_filepath = os.path.join(BL_UI_Image.svg_path, rel_filename + '.png')
@@ -110,6 +114,7 @@ class BL_UI_Image(BL_UI_Widget):
         if self.__image is not None:
             if self.__image.gl_load():
                 raise Exception()
+
             # draw image
             gpu.state.blend_set("ALPHA")
             self.drawStartShader(self.shader_img,context)

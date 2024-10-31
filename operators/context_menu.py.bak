@@ -114,8 +114,8 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
                 self.element = context.scene.sketcher.entities.get(entity_index)
 
     def getLayoutDef(self,propname):
-        # Parcourt les annotations (propriétés) de la classe et de ses superclasses
-        for base_cls in type(self.element).__mro__:  # __mro__ retourne la chaîne d'héritage
+        # Parcourt les annotations (propriÃ©tÃ©s) de la classe et de ses superclasses
+        for base_cls in type(self.element).__mro__:  # __mro__ retourne la chaÃ®ne d'hÃ©ritage
             if hasattr(base_cls, '__annotations__'):
                 for prop_name, prop_info in base_cls.__annotations__.items():
                     if prop_name == propname:
@@ -124,8 +124,8 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
         return None
         
     def findLayoutData(self,propname):
-        # Parcourt les annotations (propriétés) de la classe et de ses superclasses
-        for base_cls in type(self.element).__mro__:  # __mro__ retourne la chaîne d'héritage
+        # Parcourt les annotations (propriÃ©tÃ©s) de la classe et de ses superclasses
+        for base_cls in type(self.element).__mro__:  # __mro__ retourne la chaÃ®ne d'hÃ©ritage
             if hasattr(base_cls, '__annotations__'):
 #                print(f"Properties in {base_cls.__name__}:")    
                 for prop_name, prop_info in base_cls.__annotations__.items():
@@ -193,7 +193,7 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
     def get_operator_class_by_idname(self,idname):
         # Parcourir toutes les sous-classes de bpy.types.Operator
         for cls in bpy.types.Operator.__subclasses__():
-            # Vérifier si le bl_idname de la classe correspond à celui recherché
+            # VÃ©rifier si le bl_idname de la classe correspond Ã  celui recherchÃ©
             if hasattr(cls, "bl_idname") and cls.bl_idname == idname:
                 return cls
         return None                           
@@ -461,7 +461,7 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
 #        name="Formula",
 #        description="Formula to compute the value dynamically",
 #        default="",
-#        update=update_cb  # Optionnel : mettre à jour si la formule change
+#        update=update_cb  # Optionnel : mettre Ã  jour si la formule change
 #    )
 # BaseConstraint
 #    name: StringProperty(name="Name", get=_name_getter, set=_name_setter)

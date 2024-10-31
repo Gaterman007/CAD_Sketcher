@@ -10,6 +10,7 @@ from bpy.types import Operator, Context, Event, PropertyGroup
 class BL_UI_Widget:
     def __init__(self, *args , **kwargs):
         self.className = "Widget"
+        self.propName = None
         self._parent = None
         self.childs = []
         self._is_visible = True
@@ -37,15 +38,22 @@ class BL_UI_Widget:
 
 
 
+        self._hasProp = False   # attribut exist ?
+
         self.element = None
         self.getter = None
         self.setter = None
         self.updater = None
         self.prop_info = None
-        self.attr = None
+        self.attrName = None
         self._attribut = None
         self.attrIndex = None
         self._is_numeric = False
+        
+        propInfo = kwargs.get("propInfo", None)
+        if propInfo is not None:
+            self.propName = propInfo[0]
+            self.setProperty(*propInfo[1:])
 
     def setProperty(self,*args):
         if len(args) == 2 or len(args) == 3:
@@ -73,8 +81,10 @@ class BL_UI_Widget:
         if hasattr(prop_info,"keywords"):
             self.prop_info = prop_info
             if 'attr' in prop_info.keywords:
-                self.attr = prop_info.keywords['attr']
-#                self.attribut = getattr(self.element,self.attr)
+                self.attrName = prop_info.keywords['attr']
+#                print(self.attrName)
+                self._hasProp = True
+#                self.attribut = getattr(self.element,self.attrName)
             if 'get' in prop_info.keywords:
                 if callable(prop_info.keywords['get']):
                     # Récupérer la fonction getter
@@ -132,25 +142,29 @@ class BL_UI_Widget:
             widget.setParent(self)
         self.childs = childs
 
+
+    @property
+    def hasProp(self):
+        return self._hasProp
+    
     @property
     def attribut(self):
-        if self.getter is not None:
-            self._attribut = self.getter(self.element)
-        elif self.attr is not None:
-            self._attribut = getattr(self.element,self.attr)
-        if self.attrIndex is not None:
-            if self.unit == "ROTATION":
-                self._attribut[self.attrIndex] = math.degrees(self._attribut[self.attrIndex]) 
-            if type(self._attribut[self.attrIndex]) is float:
-                self._is_numeric = True
-            return self._attribut[self.attrIndex]
-        else:
-            if self.unit == "ROTATION":
-                self._attribut = math.degrees(self._attribut)
-            if type(self._attribut) is float:
-                self._is_numeric = True
-            return self._attribut
-            
+        if self.hasProp:
+            self._attribut = getattr(self.element,self.attrName)
+            if self.attrIndex is not None:
+                if type(self._attribut[self.attrIndex]) is float:
+                    self._is_numeric = True
+                if self.unit == "ROTATION":
+                    return math.degrees(self._attribut[self.attrIndex])
+                else:
+                    return self._attribut[self.attrIndex]
+            else:
+                if type(self._attribut) is float:
+                    self._is_numeric = True
+                if self.unit == "ROTATION":
+                    return math.degrees(self._attribut)
+                return self._attribut
+        return None
             
     @attribut.setter
     def attribut(self, value):
@@ -166,10 +180,13 @@ class BL_UI_Widget:
                 self._attribut[self.attrIndex] = value
             else:
                 self._attribut = value
-            if self.setter is not None:
-                self.setter(self.element,self._attribut)
-            elif self.attr is not None:
-                setattr(self.element,self.attr,self._attribut)
+            if self.hasProp:
+                setattr(self.element,self.attrName,self._attribut)
+                bpy.context.area.tag_redraw()
+                if self.updater is not None:
+                    self.updater(self.element,bpy.context)
+                bpy.context.view_layer.update()  # Force Blender à prendre en compte la mise à jour
+                    
 
     @property
     def attributText(self):
@@ -184,11 +201,12 @@ class BL_UI_Widget:
 
     @attributText.setter
     def attributText(self, value):
-        if type(self.attribut) is float:
+        oldValue = self.attribut
+        if type(oldValue) is float:
             self.attribut = float(value)
-        elif type(self.attribut) is int:
+        elif type(oldValue) is int:
             self.attribut = int(value)
-        elif type(self.attribut) is str:
+        elif type(oldValue) is str:
             self.attribut = str(value)
 
     @property
@@ -372,7 +390,7 @@ class BL_UI_Widget:
                 return self.mouse_down(x, y)
             else:
                 self._mouse_down = False
-                return self.mouse_up(x, y)
+                return self.mouse_up(x, y, context)
 
         elif event.type == "RIGHTMOUSE":
             bpy.context.region.tag_redraw()
@@ -381,10 +399,10 @@ class BL_UI_Widget:
                 return self.mouse_down_right(x, y)
             else:
                 self._mouse_down_right = False
-                return self.mouse_up(x, y)
+                return self.mouse_up(x, y, context)
 
         elif event.type == "MOUSEMOVE":
-            self.mouse_move(x, y)
+            self.mouse_move(x, y, context)
             inrect = self.is_in_rect(x, y)
 
             # we enter the rect
@@ -408,7 +426,7 @@ class BL_UI_Widget:
 #            and self.__inrect
             and (event.ascii != "" or event.type in self.get_input_keys())
         ):
-            return self.text_input(event)
+            return self.text_input(event, context)
 
         return ({"RUNNING_MODAL"},False)
 
@@ -423,7 +441,7 @@ class BL_UI_Widget:
 
         return False
 
-    def text_input(self, event):
+    def text_input(self, event, context):
         return ({"RUNNING_MODAL"},False)
 
     def mouse_down(self, x, y):
@@ -432,7 +450,7 @@ class BL_UI_Widget:
     def mouse_down_right(self, x, y):
         return ({"RUNNING_MODAL"},False)
 
-    def mouse_up(self, x, y):
+    def mouse_up(self, x, y, context):
         return ({"RUNNING_MODAL"},False)
 
     def mouse_enter_func(self, widget):
@@ -461,5 +479,5 @@ class BL_UI_Widget:
     def mouse_exit(self, event, x, y):
         self.call_mouse_exit()
 
-    def mouse_move(self, x, y):
+    def mouse_move(self, x, y, context):
         return {"RUNNING_MODAL"}

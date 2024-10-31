@@ -18,8 +18,8 @@ class BL_UI_Image(BL_UI_Widget):
         super().__init__(x, y, width, height)
 
     def __del__(self):
-	    if self.__image is not None:
-    	    del self.__image
+        if self.__image is not None:
+            self.__image = None
         
     def set_image_size(self, image_size):
         self.__image_size = image_size
