@@ -35,9 +35,7 @@ class BL_UI_Widget:
         self.batch()            # can be called once no need to change onless we change de shape
         self.childWithFocus = None
         self.hasFocus = False
-        self._input_keys = ["BACK_SPACE",'SPACE','RET','LEFT_ARROW','RIGHT_ARROW','UP_ARROW','DOWN_ARROW','DEL']
-
-
+        self._input_keys = ["BACK_SPACE",'SPACE','RET','LEFT_ARROW','RIGHT_ARROW','UP_ARROW','DOWN_ARROW','DEL','C','X','V']
 
         self._hasProp = False   # attribut exist ?
 
@@ -177,22 +175,17 @@ class BL_UI_Widget:
             
     @attribut.setter
     def attribut(self, value):
-        valdiff = False
-        if self.attrIndex is not None:
-            valdiff = (value != self._attribut[self.attrIndex])
-        else:
-            valdiff = (value != self._attribut)
-        if valdiff:
-            if self.attrIndex is not None:
-                self._attribut[self.attrIndex] = value
-            else:
-                self._attribut = value
-            if self.hasProp:
+        if self.hasProp:
+            if value != self.attribut:
+                if self.attrIndex is not None:
+                    self._attribut[self.attrIndex] = value
+                else:
+                    self._attribut = value
                 setattr(self.element,self.attrName,self._attribut)
-                bpy.context.area.tag_redraw()
                 if self.updater is not None:
                     self.updater(self.element,bpy.context)
-                bpy.context.view_layer.update()  # Force Blender à prendre en compte la mise à jour
+#                bpy.context.view_layer.update()  # Force Blender à prendre en compte la mise à jour
+                bpy.context.area.tag_redraw()
                     
 
     @property
@@ -436,12 +429,10 @@ class BL_UI_Widget:
             # return always false to enable mouse exit events on other buttons.(would sometimes not hide the tooltip)
             return ({"RUNNING_MODAL"},False) # self.__inrect
 
-        elif (
-            event.value == "PRESS"
-#            and self.__inrect
-            and (event.ascii != "" or event.type in self.get_input_keys())
-        ):
-            return self.text_input(event, context)
+        elif (event.value == "PRESS"):
+
+            if (event.ascii != "" or event.type in self.get_input_keys()):
+                return self.text_input(event, context)
 
         return ({"RUNNING_MODAL"},False)
 

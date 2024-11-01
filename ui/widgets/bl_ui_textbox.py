@@ -113,12 +113,25 @@ class BL_UI_Textbox(BL_UI_Label):
         if self.hasFocus:
             text_Changed = False
             index = self._carret_pos
-
-            if event.ascii != '' and len(self.text) < self.max_input_chars:
+            # Vérifie les combinaisons de copier/couper/coller
+            if event.ctrl and event.type == 'C':  # Copier
+                bpy.context.window_manager.clipboard = self.text
+                print(self.text)
+                return ({"RUNNING_MODAL"}, False)
+            elif event.ctrl and event.type == 'X':  # Couper
+                bpy.context.window_manager.clipboard = self.text
+                self.text = ""
+                self._carret_pos = 0
+                text_Changed = True
+            elif event.ctrl and event.type == 'V':  # Coller
+                paste_text = bpy.context.window_manager.clipboard
+                self.text = paste_text
+                self._carret_pos = 0
+                text_Changed = True
+            elif event.ascii != '' and len(self.text) < self.max_input_chars:
                 textvalue = self.text[:index] + event.ascii + self.text[index:]
                 if self._is_numeric and not (event.ascii.isnumeric() or event.ascii in ['.', ',', '-']):
                     return ({"RUNNING_MODAL"},False)
-                    
                 self.text = textvalue
                 self._carret_pos += 1
                 text_Changed = True
