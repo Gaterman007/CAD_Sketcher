@@ -9,6 +9,7 @@ PYPATH = sys.executable
 
 entities = {}
 dialog = {}
+created_dialog = {}
 batches = {}
 
 offscreen = None

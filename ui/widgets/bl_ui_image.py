@@ -5,22 +5,25 @@ import gpu
 from .bl_ui_widget import BL_UI_Widget
 from gpu_extras.batch import batch_for_shader
 from .Icons.SVG_Icon import SVG_Icon, get_SVG_Icon
+from .Icons.Texture import Textures
 
 class BL_UI_Image(BL_UI_Widget):
 
     # Ajouter 'widgets\SVG_Files' au répertoire parent
     svg_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'widgets', 'SVG_Files')
 
-    def __init__(self, x, y, width = 80, height = 40, color = (0.0,0.0,0.0,0.0)):
+    def __init__(self, *args , **kwargs):
+#         x, y, width = 80, height = 40, color = (0.0,0.0,0.0,0.0)
         self.__state = 0
         self.__image = None
-        self.__image_size = (width, height)
-        super().__init__(x, y, width, height)
+        self.__image_size = None
+        super().__init__( *args , **kwargs)
+        self.__image_size = (self.width, self.height)
+        self.texture = Textures(self.width, self.height)
+
 
     def __del__(self):
-        if self.__image is not None:
-            bpy.data.images.remove(self.__image)
-            self.__image = None
+        if self.texture is not None:
             self.texture = None
         
     def set_image_size(self, image_size):
@@ -46,35 +49,27 @@ class BL_UI_Image(BL_UI_Widget):
         if self.__image is None:  # image n'est pas deja definie
             svg_filename = rel_filename
             svg_filename += '.svg'
-            svg_filepath = os.path.join(BL_UI_Image.svg_path, svg_filename)
+            svg_filepath = os.path.join(BL_UI_Image.svg_path, rel_filename + '.svg')
+            png_filepath = os.path.join(BL_UI_Image.svg_path, rel_filename + '.png')
             fileExist = os.path.exists(svg_filepath)
             if fileExist:    # fichier svg exist
+                self.texture.load_SVG(svg_filepath)
                 # cree l image a partir du fichier svg
-                svg_Icon = get_SVG_Icon(svg_filepath)
-                svg_Icon.setSize(width = self.__image_size[0], height = self.__image_size[1])
-                svg_Icon.create_Image()
-                self.__image = svg_Icon.imageIcon.get_image_copy(imgname)
-                if svg_Icon.imageIcon is not None:
-                    svg_Icon.imageIcon = None
-                self.__image.gl_load()
             else:
-                png_filepath = os.path.join(BL_UI_Image.svg_path, rel_filename + '.png')
                 fileExist = os.path.exists(os.path.join(BL_UI_Image.svg_path, rel_filename + '.png'))
-                self.__image = bpy.data.images.load(
-                    png_filepath, check_existing=True
-                )
-                self.__image.name = imgname
-                self.__image.gl_load()
-        if self.__image and len(self.__image.pixels) == 0:
-            self.__image.reload()
-            self.__image.gl_load()
-        if self.__image is not None:
-            self.texture = gpu.texture.from_image(self.__image)
-
+                if fileExist:    # fichier png exist
+                    self.texture.load_PNG(png_filepath)
+        else:
+            self.texture.set_textureData(self.__image.size[0],self.__image.size[1],self.__image.pixels)
+            bpy.data.images.remove(self.__image)
+            self.__image = None
+            
     def batch(self):     
         super().batch()
         off_x = 2
         off_y = 2
+        if self.__image_size is None:
+            self.__image_size = (self.width, self.height)
         sx, sy = self.__image_size
 
         if bpy.app.version < (4, 0, 0):
@@ -111,14 +106,11 @@ class BL_UI_Image(BL_UI_Widget):
         if not self._is_visible:
             return
 
-        if self.__image is not None:
-            if self.__image.gl_load():
-                raise Exception()
-
+        if self.texture is not None:
             # draw image
             gpu.state.blend_set("ALPHA")
             self.drawStartShader(self.shader_img,context)
-            self.shader_img.uniform_sampler("image", self.texture)
+            self.texture.draw_texture(self.shader_img)
             self.batch_image.draw(self.shader_img) 
             self.drawEndShader(self.shader_img,context) 
             gpu.state.blend_set("NONE")

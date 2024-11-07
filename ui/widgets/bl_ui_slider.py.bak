@@ -299,7 +299,7 @@ class BL_UI_Slider(BL_UI_Widget):
         
         return False
     
-    def mouse_move(self, x, y):
+    def mouse_move(self, x, y, context):
         if self.is_in_rect(x,y):
             if(self.__state != 1):
                 
@@ -312,6 +312,6 @@ class BL_UI_Slider(BL_UI_Widget):
             self.__set_slider_pos(x)
             self.update(self.x_screen, self.y_screen)
  
-    def mouse_up(self, x, y):
+    def mouse_up(self, x, y, context):
         self.__state = 0
         self.__is_drag = False

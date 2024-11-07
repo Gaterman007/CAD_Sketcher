@@ -26,36 +26,32 @@ class BL_UI_DropDown(BL_UI_Label):
         if self.prop_info is not None:
             if 'items' in prop_info.keywords:
                 self.items = prop_info.keywords['items']
+                listDropDown = [item[1] for item in self.items]
+                if len(listDropDown) > 0:
+                    self.newbuttons = []
+                    y2 = 20
+                    data = 0
+                    for text in listDropDown:
+                        newbutton = BL_UI_Button(self.width + 10, y2, self.width, self.childHeight, text = text)
+                        newbutton.setMouseClicCallBack(self.buttonClick,data)
+                        self.newbuttons.append(newbutton)
+                        newbutton.visible = False
+                        self.add_widget(newbutton)
+                        y2 += self.childHeight
+                        data += 1
                 if self.getter is not None:
                     self.itemSelected = self.getter(self.element)
                     result = next((item for item in self.items if item[-1] == self.itemSelected), None)
-                    self.text = result[1]
-                    listDropDown = [item[1] for item in self.items]
-                    if len(listDropDown) > 0:
-                        self.newbuttons = []
-                        y2 = 20
-                        data = 0
-                        for text in listDropDown:
-                            newbutton = BL_UI_Button(self.width + 10, y2, self.width, self.childHeight, text = text)
-                            newbutton.setMouseClicCallBack(self.buttonClick,data)
-                            self.newbuttons.append(newbutton)
-                            newbutton.visible = False
-                            self.add_widget(newbutton)
-                            y2 += self.childHeight
-                            data += 1
+                    self._text = result[1]
 
-    def buttonClick(self,data):
+    def buttonClick(self,data, context):
         self.showDropDown(False)
         self.itemSelected = data
-        if self.setter is not None:
-            self.setter(self.element,self.itemSelected)
-            result = next((item for item in self.items if item[-1] == self.itemSelected), None)
-            self.text = result[1]
+        result = next((item for item in self.items if item[-1] == self.itemSelected), None)
+        if self._text != result[1]:
+            self._text = result[1]
+        self.element.align = result[0]
         return ({"RUNNING_MODAL"},True)
-    
-    def update(self, x, y):
-        super().update(x, y)
-        self._textpos = [x, y]
 
     def draw(self,context):
         if not self._is_visible:
@@ -81,7 +77,7 @@ class BL_UI_DropDown(BL_UI_Label):
 
         return ({"RUNNING_MODAL"},False)
 
-    def mouse_move(self, x, y):
+    def mouse_move(self, x, y, context):
         if self.is_in_rect(x, y):
             if self.__state != 1:
                 # hover state
@@ -97,7 +93,7 @@ class BL_UI_DropDown(BL_UI_Label):
             bpy.context.region.tag_redraw()
         
 
-    def mouse_up(self, x, y):
+    def mouse_up(self, x, y, context):
         result = ({"RUNNING_MODAL"},False)
         if self.is_in_rect(x, y):
             if self.__state == 1:

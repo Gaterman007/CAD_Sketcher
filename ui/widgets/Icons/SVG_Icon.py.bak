@@ -6,16 +6,16 @@ import gpu
 import bpy.utils
 import copy
 
-#import sys
-
-# Récupérer le chemin du répertoire courant (où se trouve le script)
-#current_dir = os.path.dirname(bpy.data.texts["testSVG.py"].filepath)
-
-# Ajouter ce répertoire au chemin d'importation Python
-#sys.path.append(current_dir)
 from .Matrices import Matrices
 from .ImageCls import Image
 from .SVG_Element import *
+
+svg_Icons = {}
+
+def get_SVG_Icon(name: str):
+    if name not in svg_Icons.keys():
+        svg_Icons[name] = SVG_Icon(filename = name)
+    return svg_Icons[name]
 
 class Base_Icon:
     def __init__(self, imageName = None, width = 300, height = 150, color = (0.0,0.0,0.0,0.0)):
@@ -41,17 +41,12 @@ class Base_Icon:
     def create_ImageIcon(self,width,height,color):
         self.imageIcon = Image(name = self.imageName,width = width,height = height,color = color) # Image de l icon
 
-#    def getPixel(self,PosX, PosY):
-#        return self.imageIcon.getPixel(PosX, PosY)
-
-#    def setPixel(self,PosX, PosY, color):
-#        self.imageIcon.setPixel(PosX, PosY, color)
-
-#    def draw_line(self,x1,y1,x2,y2,color):
-#        self.imageIcon.draw_line(int(x1), int(y1), int(x2), int(y2), color)
-
     def updateData():
         self.imageIcon.updateData()
+
+    def setSize(self,width = 300, height = 150):
+        self.width = width
+        self.height = height
 
 
 class Base_SVG_Icon(Base_Icon):
@@ -59,7 +54,6 @@ class Base_SVG_Icon(Base_Icon):
         super().__init__(width = width, height = height)
         self.svgElement = []  # Liste pour stocker les éléments dans une hiérarchie
         self.load_XMLFile(filename)
-#                self.create_Image()
         
     def __str__(self):
         return self.svgElement.__str__()
@@ -173,9 +167,12 @@ class Base_SVG_Icon(Base_Icon):
 class SVG_Icon(Base_SVG_Icon):
     def __init__(self, filename = None, width = 300, height = 150, keepRatio = True):
         super().__init__(filename = filename,width = width, height = height)
-        self.SizeX = width
-        self.SizeY = height
+        self.width = width
+        self.height = height
         self.keepRatio = keepRatio
+        self.initData()
+        
+    def initData(self):
         self.drawColor = (1.0,1.0,1.0,1.0)   # (0.63,0.63,0.63,1.0)
         self.fillColor = (1.0,1.0,1.0,1.0)
         self.fillrule = 'nonzero'
@@ -190,8 +187,6 @@ class SVG_Icon(Base_SVG_Icon):
         self.loopNo = -1        # nombre de boucle
         self.loopListe = []     # listes de boucle 
         self.loop = None        # current loop
-#        self.load_XMLFile(self.filename)
-#                self.create_Image()
         
     def __str__(self):
         return self.svgElement.__str__()
@@ -534,11 +529,10 @@ class SVG_Icon(Base_SVG_Icon):
         elif element.type == "svg":
             if self.keepRatio:
                 ratio = float(element.width) / float(element.height)
-                self.SizeY = int(self.SizeX / ratio)
-            self.create_ImageIcon(self.SizeX,self.SizeY,(0.0, 0.0, 0.0, 0.0))
-#            self.imageIcon = Image(width=self.finalSizeX, height=self.finalSizeY, color=(0.0, 0.0, 0.0, 0.0))
-            self.deltaX = element.width / self.SizeX
-            self.deltaY = element.height / self.SizeY
+                self.height = int(self.width / ratio)
+            self.create_ImageIcon(self.width,self.height,(0.0, 0.0, 0.0, 0.0))
+            self.deltaX = element.width / self.width
+            self.deltaY = element.height / self.height
             
             for subelement in element.elementChilds:
                 self.recursif_Vertices(subelement,level+1)
@@ -583,9 +577,9 @@ class SVG_Icon(Base_SVG_Icon):
             for loop in path_list:
                 loop.get_bounding_box()
                 fixedRangeMinX = max(int(loop.bBox[0]), 0)
-                fixedRangeMaxX = min(int(loop.bBox[2]), self.SizeX)
+                fixedRangeMaxX = min(int(loop.bBox[2]), self.width)
                 fixedRangeMinY = max(int(loop.bBox[1]), 0)
-                fixedRangeMaxY = min(int(loop.bBox[3]), self.SizeY)
+                fixedRangeMaxY = min(int(loop.bBox[3]), self.height)
                 # draw fill loops
                 if loop.fill != 'none':
                     directionOk = True
@@ -615,8 +609,11 @@ class SVG_Icon(Base_SVG_Icon):
             
     def create_Image(self):
         if self.svgElement is not None:
+            if self.imageIcon is not None:
+                self.imageIcon = None
             self.element_dict = {}
             self.matrice = {}
+            self.initData()
             self.recursif_Vertices(self.svgElement)
             for loop in self.loopListe:
                 loop.get_bounding_box()

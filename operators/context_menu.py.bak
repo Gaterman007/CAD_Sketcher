@@ -69,7 +69,9 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
             return retValue
         
         if event.type in {'ESC'}:  # Permet de quitter avec ESC
-            global_data.dialog.clear()
+            del global_data.dialog['Menu1']
+            self.panel.eraseChilds()
+            del self.panel
             bpy.context.region.tag_redraw()
             return {'CANCELLED'}
 
@@ -77,7 +79,9 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
             if event.value == 'PRESS':
                 self.rightMouseDown = True
             elif self.rightMouseDown and event.value == 'RELEASE':
-                global_data.dialog.clear()
+                del global_data.dialog['Menu1']
+                self.panel.eraseChilds()
+                del self.panel
                 bpy.context.region.tag_redraw()
                 return {'FINISHED'}
             
@@ -86,6 +90,9 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
             if handled:
                 break
         if retValue != {'RUNNING_MODAL'}:
+            del global_data.dialog['Menu1']
+            self.panel.eraseChilds()
+            del self.panel
             global_data.dialog.clear()
             bpy.context.region.tag_redraw()
             
@@ -250,11 +257,11 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
         self.panelY = (context.region.height // 2) - (self.panelHeight // 2)        
         if self.element is not None:
             dialogList = self.element.getDialog(None)
-            panel = BL_UI_Drag_Panel(self.panelX, self.panelY, self.panelWidth, self.panelHeight)
+            self.panel = BL_UI_Drag_Panel(self.panelX, self.panelY, self.panelWidth, self.panelHeight)
             y_pos = 8
-            y_pos = self.layoutWidgets(y_pos,dialogList,panel)
-            panel.height = y_pos + 8
-            global_data.dialog['Menu1'] = panel
+            y_pos = self.layoutWidgets(y_pos,dialogList,self.panel)
+            self.panel.height = y_pos + 8
+            global_data.dialog['Menu1'] = self.panel
         return True
 
     def addPropToDialog(self,propname,ypos,panel):

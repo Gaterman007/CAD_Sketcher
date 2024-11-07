@@ -259,7 +259,7 @@ class BL_UI_Up_Down(BL_UI_Widget):
     def dec_value(self):
         self.set_value(self.__up_down_value - 1)
     
-    def mouse_move(self, x, y):
+    def mouse_move(self, x, y, context):
         if self.is_in_up(x,y):
             if(self.__state != 1):
                 
@@ -275,5 +275,5 @@ class BL_UI_Up_Down(BL_UI_Widget):
         else:
             self.__state = 0
  
-    def mouse_up(self, x, y):
+    def mouse_up(self, x, y, context):
         self.__state = 0

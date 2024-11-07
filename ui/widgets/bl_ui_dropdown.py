@@ -70,7 +70,7 @@ class BL_UI_DropDown(BL_UI_Label):
     def is_in_rect(self, x, y):
         return BL_UI_Widget.is_in_rect(self,x, y)
 
-    def mouse_down(self, x, y):
+    def mouse_down(self, x, y, context):
         if self.is_in_rect(x, y):
             self.__state = 1
             return ({"RUNNING_MODAL"},True)

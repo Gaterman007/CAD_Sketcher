@@ -16,6 +16,7 @@ from ..ui.widgets.bl_ui_button import BL_UI_Button
 from ..ui.widgets.bl_ui_image import BL_UI_Image
 from ..ui.widgets.bl_ui_dropdown import BL_UI_DropDown
 from ..ui.widgets.bl_ui_seperator import BL_UI_Seperator
+from ..ui.widgets.bl_ui_toolbar import BL_UI_Toolbar
 
 from ..ui.widgets.Icons.SVG_Icon import SVG_Icon
 
@@ -40,20 +41,66 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
         
     def invoke(self, context: Context, event: Event):
         self.getElement(context)
-        if not self.element:
-            bpy.ops.wm.call_menu(name="VIEW3D_MT_selected_menu")
-            return {"FINISHED"}
+        self.toolbar = False
         self.modal = False
         self.dialog = False
+        if not self.element:
+            self.loadToolbar(context)
+            self.startModal(context)
+            return {"RUNNING_MODAL"}
+#            bpy.ops.wm.call_menu(name="VIEW3D_MT_selected_menu")
+#            return {"FINISHED"}
         if not self.delayed:
             self.loadDialog(context)
         self.startModal(context)
         return {"RUNNING_MODAL"}
 
+    def loadToolbar(self,context):
+        if not self.toolbar:
+            if not ('Toolbar' in global_data.created_dialog.keys()):
+                self.panelWidth = 300
+                self.panelHeight = 38
+                self.panelX = (context.region.width // 2) - (self.panelWidth // 2)
+                self.panelY = (context.region.height // 2) - (self.panelHeight // 2) + 400       
+                toolbarpanel = BL_UI_Drag_Panel(self.panelX, self.panelY, self.panelWidth, self.panelHeight)
+                toolbarpanel.bg_color = (0.0, 0.0, 0.0, 0.2)
+                newtoolbar = BL_UI_Toolbar(3,3,38,38,buttonWidth = 32, buttonHeight = 32)
+                newtoolbar.addButton("Distance",Operators.AddDistance,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("Diametre",Operators.AddDiameter,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("Angle",Operators.AddAngle,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("Coincident",Operators.AddCoincident,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("equal",Operators.AddEqual,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("vertical",Operators.AddVertical,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("horizontal",Operators.AddHorizontal,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("parallel",Operators.AddParallel,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("Perpendicular",Operators.AddPerpendicular,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("tangent",Operators.AddTangent,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("midpoint",Operators.AddMidPoint,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                newtoolbar.addButton("ratio",Operators.AddRatio,[('INVOKE_DEFAULT'),("wait_for_input",True)])
+                toolbarpanel.add_widget(newtoolbar)
+                toolbarpanel.width = newtoolbar.width + 6
+                global_data.created_dialog['Toolbar'] = toolbarpanel
+            global_data.dialog['Toolbar'] = global_data.created_dialog['Toolbar']
+            self.toolbar = True
+
+    def removeToolbar(self):
+        if self.toolbar:
+            if 'Toolbar' in global_data.dialog.keys():
+                del global_data.dialog['Toolbar']
+            bpy.context.region.tag_redraw()
+            self.toolbar = False
+
     def loadDialog(self,context):
         if not self.dialog:
             self.layoutDialog(context)
             self.dialog = True
+
+    def removeDialog(self):
+        if self.dialog:
+            del global_data.dialog['Menu1']
+            self.panel.eraseChilds()
+            del self.panel
+            bpy.context.region.tag_redraw()
 
     def startModal(self,context):
         if not self.modal:
@@ -64,37 +111,35 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
     def modal(self, context: Context, event: Event):
         retValue = {'RUNNING_MODAL'}
 
-        if not self.dialog:
-            self.loadDialog(context)
+        if not self.dialog and not self.toolbar:
+            if not self.element:
+                self.loadToolbar(context)
+            else:
+                self.loadDialog(context)
             return retValue
         
         if event.type in {'ESC'}:  # Permet de quitter avec ESC
-            del global_data.dialog['Menu1']
-            self.panel.eraseChilds()
-            del self.panel
-            bpy.context.region.tag_redraw()
+            self.removeDialog()
+            self.removeToolbar()
             return {'CANCELLED'}
 
         if event.type == 'RIGHTMOUSE':
             if event.value == 'PRESS':
                 self.rightMouseDown = True
             elif self.rightMouseDown and event.value == 'RELEASE':
-                del global_data.dialog['Menu1']
-                self.panel.eraseChilds()
-                del self.panel
-                bpy.context.region.tag_redraw()
+                self.removeDialog()
+                self.removeToolbar()
                 return {'FINISHED'}
+        
+        retValue = {'PASS_THROUGH'}
             
         for widget in global_data.dialog.values():
             retValue, handled = widget.handle_event(context,event)
             if handled:
                 break
-        if retValue != {'RUNNING_MODAL'}:
-            del global_data.dialog['Menu1']
-            self.panel.eraseChilds()
-            del self.panel
-            global_data.dialog.clear()
-            bpy.context.region.tag_redraw()
+        if retValue != {'RUNNING_MODAL'} and retValue != {'PASS_THROUGH'}:
+            self.removeDialog()
+            self.removeToolbar()
             
         return retValue
 
@@ -327,165 +372,16 @@ class View3D_OT_slvs_context_dialog(Operator, HighlightElement):
                 ypos += 26
         return ypos
             
-# GenericEntity        
-#   name            textbox   string
-#   label           "Type: " + type(self).__name__
-#   label           "Is Origin: " + str(self.origin)
-#   visible
-#   fixed
-#   construction
-# Point2D
-#    co: FloatVectorProperty(
-#        name="Coordinates",
-#        description="The coordinates of the point on its sketch",
-#        subtype="XYZ",
-#        size=2,
-#        unit="LENGTH",
-#        update=SlvsGenericEntity.tag_update,
-#    )
-# Point3D
-#    location: FloatVectorProperty(
-#        name="Location",
-#        description="The location of the point",
-#        subtype="XYZ",
-#        unit="LENGTH",
-#        update=SlvsGenericEntity.tag_update,
-#    )
-#    props = ("location",)
-#   delete entity  icon button
-        
-# GenericConstraintOp        
-#   name            textbox   string
-#   Failed          icon      if self.failed:
-#   visible         checkbox  bool
-# DimensionalConstraint
-#   is_reference    checkbox  bool
-#   value           textbox numeric
-#   formula         textbox
-#   setting         ?????
-#
-# SlvsDistance
-#   flip            checkbox
-#   align           enum
-#
-# GenericConstraintOp
-#   delete constraint  icon button
-
-
-# SlvsDistance      SlvsDistance,GenericConstraintOp,DimensionalConstraint
-# SlvsAngle         GenericConstraintOp,DimensionalConstraint 
-# SlvsDiameter      GenericConstraintOp,DimensionalConstraint
-# SlvsRatio         GenericConstraintOp,DimensionalConstraint
-
-#
-# SlvsCoincident    GenericConstraintOp only
-# SlvsEqual         GenericConstraintOp only
-# SlvsParallel      GenericConstraintOp only
-# SlvsHorizontal    GenericConstraintOp only    
-# SlvsVertical      GenericConstraintOp only
-# SlvsTangent       GenericConstraintOp only
-# SlvsMidpoint      GenericConstraintOp only
-# SlvsPerpendicula  GenericConstraintOp only
-
-
-
-# Ratio
-#    value: FloatProperty(
-#        name=label,
-#        subtype="UNSIGNED",
-#        update=update_system_cb,
-#        min=0.0,
-#    )
-# Diametre
-#    value: FloatProperty(
-#        name="Size",
-#        subtype="DISTANCE",
-#        unit="LENGTH",
-#        precision=6,
-#        get=DimensionalConstraint._get_value,
-#        set=DimensionalConstraint._set_value,
-#        update=update_system_cb,
-#    )
-#    setting: BoolProperty(
-#        name="Use Radius", get=use_radius_getter, set=use_radius_setter
-#    )
-#    leader_angle: FloatProperty(name="Leader Angle", default=45, subtype="ANGLE")
-#    draw_offset: FloatProperty(name="Draw Offset", default=0)
-#    type = "DIAMETER"
-#    signature = (CURVE,)
-#    props = ("value",)
-#
-# Angle
-#    label = "Angle"
-#    value: FloatProperty(
-#        name=label,
-#        subtype="ANGLE",
-#        unit="ROTATION",
-#        precision=6,
-#        update=update_system_cb,
-#        get=DimensionalConstraint._get_value,
-#        set=DimensionalConstraint._set_value,
-#    )
-#    setting: BoolProperty(
-#        name="Measure supplementary angle",
-#        update=DimensionalConstraint.assign_init_props,
-#    )
-#    draw_offset: FloatProperty(name="Draw Offset", default=1)
-#    draw_outset: FloatProperty(name="Draw Outset", default=0)
-#    type = "ANGLE"
-#    signature = ((SlvsLine2D,), (SlvsLine2D,))
-#    props = ("value",)
-#
-#
-# Distance    
-#    label = "Distance"
-#    value: FloatProperty(
-#        name=label,
-#        subtype="DISTANCE",
-#        unit="LENGTH",
-#        precision=6,
-#        update=update_system_cb,
-#        get=_get_value,
-#        set=DimensionalConstraint._set_value,
-#    )
-#    flip: BoolProperty(name="Flip", update=update_system_cb)
-#    align: EnumProperty(
-#        name="Align",
-#        items=align_items,
-#        update=update_system_cb,
-#        get=_get_align,
-#        set=_set_align,
-#    )
-#    draw_offset: FloatProperty(name="Draw Offset", default=0.3)
-#    draw_outset: FloatProperty(name="Draw Outset", default=0.0)
-#    type = "DISTANCE"
-#    signature = ((*POINT, *LINE, SlvsCircle, SlvsArc), (*POINT, *LINE, SlvsWorkplane))
-#    props = ("value",)
-# Dimentional
-#    value: Property
-#    setting: BoolProperty
-#    formula: StringProperty(
-#        name="Formula",
-#        description="Formula to compute the value dynamically",
-#        default="",
-#        update=update_cb  # Optionnel : mettre à jour si la formule change
-#    )
-# BaseConstraint
-#    name: StringProperty(name="Name", get=_name_getter, set=_name_setter)
-#    failed: BoolProperty(name="Failed")
-#    visible: BoolProperty(name="Visible", default=True, update=update_cb)
-#    is_reference = False  # Only DimensionalConstraint can be reference
-#    signature = ()
-#    props = ()
-
     def execute(self, context: Context):
         self.dialog = False
         self.modal = False
+        self.toolbar = False
 
         self.getElement(context)
         if not self.element:
-            bpy.ops.wm.call_menu(name="VIEW3D_MT_selected_menu")
-            return {"FINISHED"}
+            self.loadToolbar(context)
+            self.startModal(context)
+            return {"RUNNING_MODAL"}
         else:
             self.loadDialog(context)
             self.startModal(context)

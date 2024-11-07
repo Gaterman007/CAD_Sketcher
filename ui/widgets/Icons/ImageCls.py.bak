@@ -48,7 +48,7 @@ class Image:
                     self.image = bpy.data.images.load(rel_filepath, check_existing=True)
                     self.image.name = imgname
                 else:
-                    print(f"Image file {rel_filepath} not found, using default image.")
+#                    print(f"Image file {rel_filepath} not found, using default image.")
                     self.create_image(self.width, self.height, self.backColor)
 
             # Charger l'image dans OpenGL si elle existe

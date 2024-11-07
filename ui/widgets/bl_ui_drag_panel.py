@@ -13,13 +13,14 @@ class BL_UI_Drag_Panel(BL_UI_Widget):
     def get_location(self):
         return [self._x + self.drag_offset_x,self._y + self.drag_offset_y]
 
-    def mouse_down(self, x, y):
+    def mouse_down(self, x, y, context):
         if self.is_in_rect(x,y):
             self.is_drag = True
             self.downPos = [x,y]
             return ({"RUNNING_MODAL"},True)
         
-        return ({"RUNNING_MODAL"},False)
+        return ({"PASS_THROUGH"},False)
+        
 
     def mouse_move(self, x, y, context):
         if self.is_drag:
@@ -35,4 +36,7 @@ class BL_UI_Drag_Panel(BL_UI_Widget):
             self.drag_offset_x = 0
             self.drag_offset_y = 0
             bpy.context.region.tag_redraw()
-        return ({"RUNNING_MODAL"},False)
+        if self.is_in_rect(x,y):
+            return ({"RUNNING_MODAL"},False)
+        else:
+            return ({"PASS_THROUGH"},False)

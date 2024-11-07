@@ -28,15 +28,6 @@ class Base_Icon:
     def __del__(self):
         if self.imageIcon is not None:
             self.imageIcon = None
-        
-    def loadFromPng(self,filename):
-        self.imageName = os.path.basename(filename)
-        self.imageIcon = Image(name = self.imageName,width = self.width,height = self.height,color = self.color) # Image de l icon
-        self.imageIcon.loadFromPng(filename)
-        
-    def saveToPng(self,filename,flip = True): 
-        if self.imageIcon is not None:
-            self.imageIcon.saveToPng(filename,flip)
 
     def create_ImageIcon(self,width,height,color):
         self.imageIcon = Image(name = self.imageName,width = width,height = height,color = color) # Image de l icon
@@ -167,8 +158,6 @@ class Base_SVG_Icon(Base_Icon):
 class SVG_Icon(Base_SVG_Icon):
     def __init__(self, filename = None, width = 300, height = 150, keepRatio = True):
         super().__init__(filename = filename,width = width, height = height)
-        self.width = width
-        self.height = height
         self.keepRatio = keepRatio
         self.initData()
         
@@ -530,7 +519,6 @@ class SVG_Icon(Base_SVG_Icon):
             if self.keepRatio:
                 ratio = float(element.width) / float(element.height)
                 self.height = int(self.width / ratio)
-            self.create_ImageIcon(self.width,self.height,(0.0, 0.0, 0.0, 0.0))
             self.deltaX = element.width / self.width
             self.deltaY = element.height / self.height
             
@@ -553,7 +541,7 @@ class SVG_Icon(Base_SVG_Icon):
 
         return False
 
-    def draw_Image(self,element,level = 0):
+    def draw_Image(self,element,image,level = 0):
         level_key = f"level_{level}"
         level_key_moinsun = f"level_{level-1}"
         self.element_dict[level_key] = element.to_dict()
@@ -562,18 +550,22 @@ class SVG_Icon(Base_SVG_Icon):
         if level > 0:
             self.element_dict[level_key] = {**self.element_dict[level_key_moinsun], **self.element_dict[level_key]}
 
+        if element.type == 'svg':
+            if image is None:
+                self.create_ImageIcon(self.width,self.height,(0.0, 0.0, 0.0, 0.0))
+
         for subelement in element.elementChilds:
-            self.draw_Image(subelement,level+1)
+            self.draw_Image(subelement,image,level+1)
 
         if element.type != 'grid' and element.type != 'nameview':
             if element.type == 'path':
-                if self.imageIcon is not None:
+                if self.imageIcon is not None or image is not None:
                     for loop in element.loops:
                         loop.get_bounding_box()
-                    self.draw_paths(element.loops)
+                    self.draw_paths(element.loops,image)
 
-    def draw_paths(self, path_list):
-        if self.imageIcon is not None:
+    def draw_paths(self, path_list,image):
+        if self.imageIcon is not None or image is not None:
             for loop in path_list:
                 loop.get_bounding_box()
                 fixedRangeMinX = max(int(loop.bBox[0]), 0)
@@ -588,12 +580,20 @@ class SVG_Icon(Base_SVG_Icon):
                             for fillPosY in range(fixedRangeMinY,fixedRangeMaxY):
                                 if loop.point_in_loop(fillPosX, fillPosY):
                                     if self.point_in_paths(fillPosX, fillPosY, path_list):
-                                        oldColor = self.imageIcon.getPixel(fillPosX, fillPosY)
+                                        if image is not None:
+                                            oldColor = image.getPixel(fillPosX, fillPosY)
+                                        else:
+                                            oldColor = self.imageIcon.getPixel(fillPosX, fillPosY)
                                         if oldColor is not None:
                                             couleur_finale = oldColor
                                             for idx in range(len(couleur_finale)):
                                                 couleur_finale[idx] = (loop.drawColor[idx] * loop.opacity) + (oldColor[idx] * (1 - loop.opacity))
-                                            self.imageIcon.setPixel(fillPosX, fillPosY,couleur_finale)
+                                            if image is not None:
+                                                image.setPixel(fillPosX, fillPosY,couleur_finale)
+                                            else:
+                                                self.imageIcon.setPixel(fillPosX, fillPosY,couleur_finale)
+
+
                 # draw lines
                 n = len(loop.loopIndex)
                 for i in range(0,n,2):
@@ -603,11 +603,17 @@ class SVG_Icon(Base_SVG_Icon):
                     # Coordonées des sommets correspondants
                     x1, y1 = self.vertices[i1]
                     x2, y2 = self.vertices[i2]
-                    self.imageIcon.draw_line(int(x1), int(y1), int(x2), int(y2), loop.drawColor)
-            self.imageIcon.updateData()
+                    if image is not None:
+                        image.draw_line(int(x1), int(y1), int(x2), int(y2), loop.drawColor)
+                    else:
+                        self.imageIcon.draw_line(int(x1), int(y1), int(x2), int(y2), loop.drawColor)
+            if image is not None:
+                image.update_texture()
+            else:
+                self.imageIcon.updateData()
 
             
-    def create_Image(self):
+    def create_Image(self,image = None):
         if self.svgElement is not None:
             if self.imageIcon is not None:
                 self.imageIcon = None
@@ -617,5 +623,14 @@ class SVG_Icon(Base_SVG_Icon):
             self.recursif_Vertices(self.svgElement)
             for loop in self.loopListe:
                 loop.get_bounding_box()
-            self.draw_Image(self.svgElement)
+            self.draw_Image(self.svgElement,image)
 
+    def create_Texture(self, texture):
+        if self.svgElement is not None:
+            self.element_dict = {}
+            self.matrice = {}
+            self.initData()
+            self.recursif_Vertices(self.svgElement)
+            for loop in self.loopListe:
+                loop.get_bounding_box()
+            self.draw_Image(self.svgElement)

@@ -65,8 +65,6 @@ class base_Element:
     def set_attribute(self, element, name, attr_type=str):
         value = element.get(name, None)
         if value is not None:
-            if attr_type == float and isinstance(value, str):
-                value = value.rstrip("mm").rstrip("cm").rstrip("in").rstrip("pt").rstrip("pc").rstrip("px").strip()           
             try:
                 value = attr_type(value)
                 self._attributes[name] = value
@@ -104,21 +102,6 @@ class base_Element:
         # Récupérer les attributs en évitant les exclusions
         for attr_name, attr_type in self.attributes_to_get.items():
             self.set_attribute(element, attr_name, attr_type)
-        
-        if self["style"] is not None:
-            style_pairs = self["style"].split(';')
-            for pair in style_pairs:
-                if ':' in pair:
-                    name, value = pair.split(':', 1)  # Split au premier `:`
-                    name = name.strip()
-                    value = value.strip()
-                    if name in self.attributes_to_get:
-                        attr_type = self.attributes_to_get[name]
-                        try:
-                            value = attr_type(value)
-                            self._attributes[name] = value
-                        except ValueError:
-                            pass  # Ignorer les erreurs de conversion
 
         # Attributs inconnus (non exclus)
         filtered_attributes = {key.split('}')[-1]: value for key, value in element.attrib.items() if key.split('}')[-1] not in self.attributes_to_get.keys()}
@@ -256,8 +239,7 @@ class Group_Element(base_Element):
     # On ajoute de nouveaux attributs à ceux de base_Element
     attributes_to_get = {**base_Element.attributes_to_get, 
                          "enable-background": str,
-                         "label":str,
-                         "groupmode":str}
+                         "label":str}
 
     def __init__(self):
         super().__init__()
@@ -284,8 +266,7 @@ class NameView_Element(base_Element):
                          "window-y":int,
                          "window-maximized":int,
                          "current-layer":str,
-                         "showguides":bool,
-                         "document-units":str
+                         "showguides":bool
                          }
 
     def __init__(self):

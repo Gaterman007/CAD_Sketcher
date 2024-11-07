@@ -90,10 +90,6 @@ class BL_UI_Button(BL_UI_Label):
             color = self._bg_color
         self.shader.uniform_float("color", color)
 
-    def setMouseClicCallBack(self,funct,data):
-        self._clicFunct = funct
-        self._FunctData = data
-
     def is_in_rect(self, x, y):
         return BL_UI_Widget.is_in_rect(self,x, y)
 
@@ -108,7 +104,7 @@ class BL_UI_Button(BL_UI_Label):
             return {"RUNNING_MODAL"}, True
         return {"RUNNING_MODAL"}, False
 
-    def mouse_move(self, x, y):
+    def mouse_move(self, x, y, context):
         """
         Gère l'événement de mouvement de souris.
         :param x: Position x de la souris.
@@ -121,7 +117,7 @@ class BL_UI_Button(BL_UI_Label):
             self._setState(self.STATE_NORMAL)
         return {"RUNNING_MODAL"}, False
 
-    def mouse_up(self, x, y):
+    def mouse_up(self, x, y, context):
         """
         Gère l'événement de relâchement de la souris.
         :param x: Position x de la souris.
@@ -142,7 +138,7 @@ class BL_UI_Button(BL_UI_Label):
                     print(f"Erreur d'appel d'opérateur: {e}")                    
             else:
                 if self._clicFunct is not None:
-                    result = self._clicFunct(self._FunctData)
+                    result = self._clicFunct(self._FunctData,context)
             self._setState(self.STATE_HOVER)
         else:
             self._setState(self.STATE_NORMAL)

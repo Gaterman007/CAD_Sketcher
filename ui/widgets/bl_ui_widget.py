@@ -373,7 +373,7 @@ class BL_UI_Widget:
         retValue = ({"RUNNING_MODAL"},False)
 
         if not self._is_visible:
-            return retValue
+            return ({'PASS_THROUGH'},False)
         if not self._is_active:
             return retValue
 
@@ -395,7 +395,7 @@ class BL_UI_Widget:
             bpy.context.region.tag_redraw()
             if event.value == "PRESS":
                 self._mouse_down = True
-                return self.mouse_down(x, y)
+                return self.mouse_down(x, y, context)
             else:
                 self._mouse_down = False
                 return self.mouse_up(x, y, context)
@@ -407,7 +407,7 @@ class BL_UI_Widget:
                 return self.mouse_down_right(x, y)
             else:
                 self._mouse_down_right = False
-                return self.mouse_up(x, y, context)
+                return self.mouse_up_right(x, y, context)
 
         elif event.type == "MOUSEMOVE":
             self.mouse_move(x, y, context)
@@ -425,16 +425,17 @@ class BL_UI_Widget:
                 self.__inrect = False
                 self.mouse_exit(event, x, y)
                 bpy.context.region.tag_redraw()
+                return ({'PASS_THROUGH'},False)
 
             # return always false to enable mouse exit events on other buttons.(would sometimes not hide the tooltip)
-            return ({"RUNNING_MODAL"},False) # self.__inrect
+            return ({"PASS_THROUGH"},False) # self.__inrect
 
         elif (event.value == "PRESS"):
 
             if (event.ascii != "" or event.type in self.get_input_keys()):
                 return self.text_input(event, context)
 
-        return ({"RUNNING_MODAL"},False)
+        return ({"PASS_THROUGH"},False)
 
     def get_input_keys(self):
         return self._input_keys
@@ -450,10 +451,13 @@ class BL_UI_Widget:
     def text_input(self, event, context):
         return ({"RUNNING_MODAL"},False)
 
-    def mouse_down(self, x, y):
+    def mouse_down(self, x, y, context):
         return ({"RUNNING_MODAL"},False)
 
     def mouse_down_right(self, x, y):
+        return ({"RUNNING_MODAL"},False)
+
+    def mouse_up_right(self, x, y, context):
         return ({"RUNNING_MODAL"},False)
 
     def mouse_up(self, x, y, context):

@@ -290,7 +290,7 @@ class BL_UI_Slider(BL_UI_Widget):
             except:
                 pass
                  
-    def mouse_down(self, x, y):    
+    def mouse_down(self, x, y, context):    
         if self.is_in_rect(x,y):
             self.__state = 1
             self.__is_drag = True

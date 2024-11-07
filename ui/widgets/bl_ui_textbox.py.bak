@@ -35,7 +35,6 @@ class BL_UI_Textbox(BL_UI_Label):
         self._carret_pos = 0
         self.max_input_chars = 200
         self.update_carret()
-        self._is_numeric = False
 #        self._input_keys = ['ESC', 'RET', 'BACK_SPACE', 'HOME', 'END', 'LEFT_ARROW', 'RIGHT_ARROW', 'DEL']
         self.caret_visible = False
         self.timerOn = False
@@ -114,13 +113,26 @@ class BL_UI_Textbox(BL_UI_Label):
         if self.hasFocus:
             text_Changed = False
             index = self._carret_pos
-
-            if event.ascii != '' and len(self.text) < self.max_input_chars:
-                value = self.text[:index] + event.ascii + self.text[index:]
+            # Vérifie les combinaisons de copier/couper/coller
+            if event.ctrl and event.type == 'C':  # Copier
+                bpy.context.window_manager.clipboard = self.text
+                print(self.text)
+                return ({"RUNNING_MODAL"}, False)
+            elif event.ctrl and event.type == 'X':  # Couper
+                bpy.context.window_manager.clipboard = self.text
+                self.text = ""
+                self._carret_pos = 0
+                text_Changed = True
+            elif event.ctrl and event.type == 'V':  # Coller
+                paste_text = bpy.context.window_manager.clipboard
+                self.text = paste_text
+                self._carret_pos = 0
+                text_Changed = True
+            elif event.ascii != '' and len(self.text) < self.max_input_chars:
+                textvalue = self.text[:index] + event.ascii + self.text[index:]
                 if self._is_numeric and not (event.ascii.isnumeric() or event.ascii in ['.', ',', '-']):
                     return ({"RUNNING_MODAL"},False)
-                    
-                self.text = value
+                self.text = textvalue
                 self._carret_pos += 1
                 text_Changed = True
             elif event.type == 'BACK_SPACE':
@@ -164,8 +176,7 @@ class BL_UI_Textbox(BL_UI_Label):
 
     def mouse_down(self, x, y):
         if self.is_in_rect(x, y):
-            if self._is_numeric:
-                self.downPos = [x,y]
+            self.downPos = [x,y]
             self.mousePressed = True
             self.drag = False
             return ({"RUNNING_MODAL"},True)
@@ -177,15 +188,12 @@ class BL_UI_Textbox(BL_UI_Label):
             if self.drag:
 #                if self.attrName is not None:
                 if self.hasProp:
+                    print(self.saveData)
                     value = self.saveData - (float(self.downPos[0] - x) / self.increment)
-#                    if self.element.label == "Distance":
-#                        self.element._set_value(value)
-#                        print("new value ",value)
-#                    else:
-                    self.attribut = value
+                    print(value)
+                    print()
                     self.attribut = value
                     self.text = self.attributText
-#                    print("TextBox Mouse Move ",self.element, hex(id(self.element)))
                 return ({"RUNNING_MODAL"},True)
             else:
                 if self._is_numeric:

@@ -114,16 +114,15 @@ class BL_UI_Textbox(BL_UI_Label):
             text_Changed = False
             index = self._carret_pos
             # Vérifie les combinaisons de copier/couper/coller
-            if event.ctrl and event.type == 'C':  # Copier
+            if (event.ctrl or event.oskey) and event.type == 'C':  # Copier
                 bpy.context.window_manager.clipboard = self.text
-                print(self.text)
                 return ({"RUNNING_MODAL"}, False)
-            elif event.ctrl and event.type == 'X':  # Couper
+            elif (event.ctrl or event.oskey) and event.type == 'X':  # Couper
                 bpy.context.window_manager.clipboard = self.text
                 self.text = ""
                 self._carret_pos = 0
                 text_Changed = True
-            elif event.ctrl and event.type == 'V':  # Coller
+            elif (event.ctrl or event.oskey) and event.type == 'V':  # Coller
                 paste_text = bpy.context.window_manager.clipboard
                 self.text = paste_text
                 self._carret_pos = 0
@@ -174,7 +173,7 @@ class BL_UI_Textbox(BL_UI_Label):
     def is_in_rect(self, x, y):
         return BL_UI_Widget.is_in_rect(self,x, y)
 
-    def mouse_down(self, x, y):
+    def mouse_down(self, x, y, context):
         if self.is_in_rect(x, y):
             self.downPos = [x,y]
             self.mousePressed = True

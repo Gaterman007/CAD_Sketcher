@@ -240,7 +240,7 @@ class BL_UI_Up_Down(BL_UI_Widget):
             except:
                 pass
                  
-    def mouse_down(self, x, y):    
+    def mouse_down(self, x, y, context):    
         if self.is_in_up(x,y):
             self.__state = 1
             self.inc_value()
